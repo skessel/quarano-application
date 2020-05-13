@@ -1,7 +1,5 @@
 package quarano.actions.web;
 
-import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.*;
-
 import quarano.actions.ActionItem;
 import quarano.actions.ActionItem.ItemType;
 import quarano.actions.ActionItems;
@@ -14,15 +12,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 import org.springframework.lang.Nullable;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Oliver Drotbohm
  * @author Patrick Otto
  */
-class CaseActionSummary {
+@Relation(collectionRelation = "anomalies")
+class CaseActionSummary extends RepresentationModel<CaseActionSummary> {
 
 	private final ActionItems items;
 	private final TrackedCaseSummary summary;
@@ -98,14 +97,6 @@ class CaseActionSummary {
 
 	boolean hasUnresolvedItems() {
 		return items.hasUnresolvedItems();
-	}
-
-	@JsonProperty("_links")
-	public Map<String, Object> getLinks() {
-
-		var detailsLink = on(ActionItemController.class).allActions(trackedCase.getId(), null);
-
-		return Map.of("self", Map.of("href", fromMethodCall(detailsLink).toUriString()));
 	}
 
 	private List<DescriptionCode> getDescriptionCodes(ItemType type) {

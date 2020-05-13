@@ -11,14 +11,17 @@ import quarano.core.web.LoggedIn;
 import quarano.department.TrackedCase;
 import quarano.department.TrackedCase.TrackedCaseIdentifier;
 import quarano.department.TrackedCaseRepository;
-import quarano.department.web.ExternalTrackedCaseRepresentations;
+import quarano.department.web.TrackedCaseLinkRelations;
 
 import java.util.Comparator;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.mediatype.hal.HalModelBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -33,16 +36,16 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-public class ActionItemController {
+public class AnomaliesController {
 
 	private final @NonNull ActionItemRepository items;
 	private final @NonNull ActionItemsManagement actionItems;
 	private final @NonNull MessageSourceAccessor messages;
 	private final @NonNull TrackedCaseRepository cases;
-	private final @NonNull ExternalTrackedCaseRepresentations trackedCaseRepresentations;
+	private final @NonNull AnomaliesRepresentations representations;
 
-	@GetMapping("/api/hd/actions/{identifier}")
-	HttpEntity<?> allActions(@PathVariable TrackedCaseIdentifier identifier, //
+	@GetMapping(path = "/api/hd/actions/{identifier}", produces = MediaTypes.HAL_JSON_VALUE)
+	public HttpEntity<?> getAnomalies(@PathVariable TrackedCaseIdentifier identifier, //
 			@LoggedIn DepartmentIdentifier department) {
 
 		var trackedCase = cases.findById(identifier) //
@@ -55,7 +58,7 @@ public class ActionItemController {
 
 		var id = trackedCase.getTrackedPerson().getId();
 
-		return ResponseEntity.ok(CaseActionsRepresentation.of(trackedCase, items.findByTrackedPerson(id), messages));
+		return ResponseEntity.ok(representations.toRepresentation(trackedCase, items.findByTrackedPerson(id)));
 	}
 
 	@PutMapping("/api/hd/actions/{identifier}/resolve")
@@ -78,22 +81,21 @@ public class ActionItemController {
 
 		actionItems.resolveItemsFor(trackedCase, payload.getComment());
 
-		return allActions(identifier, department);
+		return getAnomalies(identifier, department);
 	}
 
 	@GetMapping("/api/hd/actions")
-	Stream<?> getActions(@LoggedIn Department department) {
+	public RepresentationModel<?> getAllCasesByAnomalies(@LoggedIn Department department) {
 
-		return cases.findByDepartmentId(department.getId()) //
-				.map(trackedCase -> {
-
-					var summary = trackedCaseRepresentations.toSummary(trackedCase);
-
-					return new CaseActionSummary(trackedCase, items.findUnresolvedByCase(trackedCase), summary);
-
-				}) //
+		var collect = cases.findByDepartmentId(department.getId()) //
+				.map(it -> representations.toSummary(it, items.findUnresolvedByCase(it))) //
 				.stream() //
-				.filter(CaseActionSummary::hasUnresolvedItems)
-				.sorted(Comparator.comparing(CaseActionSummary::getPriority).reversed());
+				.filter(CaseActionSummary::hasUnresolvedItems) //
+				.sorted(Comparator.comparing(CaseActionSummary::getPriority).reversed()) //
+				.collect(Collectors.toList());
+
+		return HalModelBuilder.halModel() //
+				.embed(collect, TrackedCaseLinkRelations.ANOMALIES) //
+				.build();
 	}
 }

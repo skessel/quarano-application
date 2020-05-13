@@ -11,6 +11,7 @@ import quarano.util.TokenResponse;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -51,7 +52,7 @@ class UserControllerIntegrationTests {
 				.header("Authorization", "Bearer " + response.getToken()) //
 				.contentType(MediaType.APPLICATION_JSON)) //
 				.andExpect(status().isOk()) //
-				.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)) //
+				.andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON_VALUE)) //
 				.andReturn().getResponse().getContentAsString();
 
 		DocumentContext document = JsonPath.parse(resultDtoStr);

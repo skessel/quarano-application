@@ -35,13 +35,15 @@ public class TrackedCaseStatusAware<T extends RepresentationModel<T>> extends Re
 	@SuppressWarnings("null")
 	public static Links getDefaultLinks(TrackedCase trackedCase) {
 
+		var id = trackedCase.getId();
 		var controller = on(TrackedCaseController.class);
 
-		var links = Links.of(Link.of(fromMethodCall(controller.concludeCase(trackedCase.getId(), null)).toUriString(),
-				TrackedCaseLinkRelations.CONCLUDE));
+		var links = Links.NONE //
+				.and(Link.of(fromMethodCall(controller.getCase(id, null)).toUriString()).withSelfRel()).and(Link
+						.of(fromMethodCall(controller.concludeCase(id, null)).toUriString(), TrackedCaseLinkRelations.CONCLUDE));
 
-		Supplier<String> uri = () -> fromMethodCall(
-				on(RegistrationController.class).createRegistration(trackedCase.getId(), null)).toUriString();
+		Supplier<String> uri = () -> fromMethodCall(on(RegistrationController.class).createRegistration(id, null))
+				.toUriString();
 
 		if (trackedCase.getStatus().equals(Status.IN_REGISTRATION)) {
 			links = links.and(Link.of(uri.get(), TrackedCaseLinkRelations.RENEW));

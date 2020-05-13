@@ -250,6 +250,16 @@ public class TrackedCase extends QuaranoAggregate<TrackedCase, TrackedCaseIdenti
 		return testResult != null;
 	}
 
+	TrackedCase markAsManuallyTracked() {
+
+		assertStatus(Status.OPEN, "Cannot mark case %s as tracked manually as it is in status %s!", id, status);
+
+		this.status = Status.TRACKED_MANUALLY;
+		this.registerEvent(CaseStatusUpdated.of(this));
+
+		return this;
+	}
+
 	/**
 	 * @return
 	 */
@@ -285,6 +295,8 @@ public class TrackedCase extends QuaranoAggregate<TrackedCase, TrackedCaseIdenti
 	public static enum Status {
 
 		OPEN,
+
+		TRACKED_MANUALLY,
 
 		IN_REGISTRATION,
 

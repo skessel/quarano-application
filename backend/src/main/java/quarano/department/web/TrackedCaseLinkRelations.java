@@ -10,4 +10,7 @@ public class TrackedCaseLinkRelations {
 	public static final LinkRelation START_TRACKING = LinkRelation.of("start-tracking");
 	public static final LinkRelation CONCLUDE = LinkRelation.of("conclude");
 	public static final LinkRelation RENEW = LinkRelation.of("renew");
+
+	public static final LinkRelation CASES = LinkRelation.of("cases");
+	public static final LinkRelation ANOMALIES = LinkRelation.of("anomalies");
 }

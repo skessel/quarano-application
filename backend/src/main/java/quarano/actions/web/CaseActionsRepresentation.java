@@ -1,7 +1,5 @@
 package quarano.actions.web;
 
-import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.*;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +17,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.util.Streamable;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.LinkRelation;
 import org.springframework.hateoas.RepresentationModel;
 
 /**
@@ -29,24 +25,13 @@ import org.springframework.hateoas.RepresentationModel;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CaseActionsRepresentation extends RepresentationModel<CaseActionsRepresentation> {
 
-	private static final LinkRelation RESOLVE_REL = LinkRelation.of("resolve");
-
 	private final TrackedCase trackedCase;
 	private final ActionItems items;
 	private final MessageSourceAccessor messages;
 
 	public static CaseActionsRepresentation of(TrackedCase trackedCase, ActionItems items,
 			MessageSourceAccessor messages) {
-
-		CaseActionsRepresentation result = new CaseActionsRepresentation(trackedCase, items, messages);
-
-		@SuppressWarnings("null")
-		var uriString = fromMethodCall(on(ActionItemController.class) //
-				.resolveActions(trackedCase.getId(), null, null, null)).toUriString();
-
-		return items.hasUnresolvedItems() //
-				? result.add(Link.of(uriString, RESOLVE_REL)) //
-				: result;
+		return new CaseActionsRepresentation(trackedCase, items, messages);
 	}
 
 	public TrackedCaseIdentifier getCaseId() {

@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-class TrackedCaseController {
+public class TrackedCaseController {
 
 	private final @NonNull TrackingController tracking;
 	private final @NonNull TrackedCaseRepository cases;
@@ -69,7 +69,7 @@ class TrackedCaseController {
 	private final EmbeddedWrappers wrappers = new EmbeddedWrappers(false);
 
 	@GetMapping(path = "/api/hd/cases", produces = MediaTypes.HAL_JSON_VALUE)
-	RepresentationModel<?> getCases(@LoggedIn Department department) {
+	public RepresentationModel<?> getCases(@LoggedIn Department department) {
 
 		var summaries = cases.findByDepartmentIdOrderByLastNameAsc(department.getId()) //
 				.map(representations::toSummary) //
@@ -192,7 +192,7 @@ class TrackedCaseController {
 	}
 
 	@GetMapping("/api/enrollment")
-	HttpEntity<?> enrollment(@LoggedIn TrackedPerson person) {
+	public HttpEntity<?> enrollment(@LoggedIn TrackedPerson person) {
 
 		var map = cases.findByTrackedPerson(person) //
 				.map(TrackedCase::getEnrollment) //

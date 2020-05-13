@@ -8,7 +8,7 @@ import org.springframework.util.StringUtils;
  * @author Oliver Drotbohm
  */
 @Data
-public class ActionsReviewed {
+class ActionsReviewed {
 
 	private String comment;
 
