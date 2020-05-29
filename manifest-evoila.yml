@@ -1,24 +1,24 @@
 # App Manifest
 applications:
-###############   develop system #########################
-- name: quarano-frontend-dev
+###############   test system #########################
+- name: quarano-frontend-test
   memory: 128M
   buildpacks:
    - https://github.com/cloudfoundry/staticfile-buildpack
   path: ./frontend/dist/apps/quarano-frontend
   command: "$HOME/boot.sh"
   routes:
-    - route: quarano-frontend-dev.cfapps.io
-    - route: mannheim.quarano.de
-- name: quarano-backend-dev
+    - route: quarano-frontend-test.cf.evoila.io
+- name: quarano-backend-test
   buildpacks:
     - java_buildpack
   path: ./backend/target/quarano-backend-0.0.1-SNAPSHOT.jar
-  services:
-    - quarano-postgres-dev
   env:
     JBP_CONFIG_OPEN_JDK_JRE: "{ jre: { version: 11.+ } }"
-    SPRING_PROFILES_ACTIVE: develop
+    SPRING_PROFILES_ACTIVE: prod, test
+    QUARANO_JWT_ALLOWED_ORIGINS: quarano-frontend-test.cf.evoila.io
+    SPRING_FLYWAY_BASELINE_ON_MIGRATE: true
+    SPRING_FLYWAY_BASELINE_VERSION: 0
     
 ###############   Mannheim system #########################
 - name: quarano-frontend
@@ -30,6 +30,7 @@ applications:
   routes:
     - route: quarano-frontend.cf.evoila.io
     - route: mannheim.quarano.de
+
 - name: quarano-backend
   buildpacks:
     - java_buildpack
@@ -41,6 +42,7 @@ applications:
   env:
     JBP_CONFIG_OPEN_JDK_JRE: "{ jre: { version: 11.+ } }"
     SPRING_PROFILES_ACTIVE: prod
+    QUARANO_JWT_ALLOWED_ORIGINS: mannheim.quarano.de
     QUARANO_APP_HOST: mannheim.quarano.de
     SPRING_FLYWAY_BASELINE_ON_MIGRATE: true
     SPRING_FLYWAY_BASELINE_VERSION: 0
