@@ -15,15 +15,13 @@ import quarano.tracking.TrackedPerson;
 import quarano.tracking.TrackedPerson.TrackedPersonIdentifier;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.jddd.core.types.Identifier;
 
@@ -42,6 +40,7 @@ import org.jddd.core.types.Identifier;
 public class Account extends QuaranoAggregate<Account, AccountIdentifier> {
 
 	private EncryptedPassword password;
+	private LocalDateTime passwordChangedAt;
 	private String username, firstname, lastname;
 	private EmailAddress email;
 
@@ -51,7 +50,7 @@ public class Account extends QuaranoAggregate<Account, AccountIdentifier> {
 	private List<Role> roles = new ArrayList<>();
 
 	public Account(String username, EncryptedPassword password, String firstname, String lastname, EmailAddress email,
-			DepartmentIdentifier departmentId, List<Role> roles) {
+			DepartmentIdentifier departmentId, List<Role> roles, Optional<LocalDateTime> passwordChangedAt) {
 		super();
 
 		this.id = AccountIdentifier.of(UUID.randomUUID());
@@ -63,12 +62,13 @@ public class Account extends QuaranoAggregate<Account, AccountIdentifier> {
 		this.email = email;
 
 		roles.stream().forEach(it -> this.roles.add(it));
+		this.passwordChangedAt = passwordChangedAt.orElse(null);
 	}
 
 	public Account(String username, EncryptedPassword password, String firstname, String lastname,
-			DepartmentIdentifier departmentId, Role role) {
+			DepartmentIdentifier departmentId, Role role, Optional<LocalDateTime> passwordChangedAt) {
 
-		this(username, password, firstname, lastname, null, departmentId, new ArrayList<>());
+		this(username, password, firstname, lastname, null, departmentId, new ArrayList<>(), passwordChangedAt);
 		this.add(role);
 	}
 
@@ -98,6 +98,10 @@ public class Account extends QuaranoAggregate<Account, AccountIdentifier> {
 
 	public UUID getIdAsUuid() {
 		return id.accountId;
+	}
+
+	public Optional<LocalDateTime> getPasswordChangedAt() {
+		return Optional.ofNullable(passwordChangedAt);
 	}
 
 	/**
@@ -135,6 +139,10 @@ public class Account extends QuaranoAggregate<Account, AccountIdentifier> {
 
 		return this.roles.stream() //
 				.map(Role::getRoleType).anyMatch(candidates::contains);
+	}
+
+	public boolean isPasswordChangeRequired() {
+		return getPasswordChangedAt().isEmpty();
 	}
 
 	@Embeddable

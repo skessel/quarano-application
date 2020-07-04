@@ -9,6 +9,7 @@ import quarano.account.Password.EncryptedPassword;
 import quarano.account.Password.UnencryptedPassword;
 import quarano.core.EmailAddress;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +47,8 @@ public class AccountService {
 			String lastname, DepartmentIdentifier departmentId) {
 
 		var role = roles.findByName(RoleType.ROLE_USER.toString());
-		var account = accounts.save(new Account(username, encrypt(password), firstname, lastname, departmentId, role));
+		var lastPasswordChange = Optional.of(LocalDateTime.now());
+		var account = accounts.save(new Account(username, encrypt(password), firstname, lastname, departmentId, role, lastPasswordChange));
 
 		return account;
 	}
@@ -57,8 +59,9 @@ public class AccountService {
 		var encryptedPassword = EncryptedPassword.of(passwordEncoder.encode(password.asString()));
 
 		var roleList = roleTypes.stream().map(it -> roles.findByName(it.toString())).collect(Collectors.toList());
+		var lastPasswordChange = Optional.<LocalDateTime>empty();
 		var account = accounts
-				.save(new Account(username, encryptedPassword, firstname, lastname, email, departmentId, roleList));
+				.save(new Account(username, encryptedPassword, firstname, lastname, email, departmentId, roleList, lastPasswordChange));
 
 		log.info("Created staff account for " + username);
 
@@ -147,7 +150,41 @@ public class AccountService {
 	 * @return the account with the new password applied.
 	 */
 	public Account changePassword(UnencryptedPassword password, Account account) {
-		return accounts.save(account.setPassword(encrypt(password)));
+		return accounts.save(account.setPassword(encrypt(password)).setPasswordChangedAt(LocalDateTime.now()));
+	}
+
+	/**
+	 * Resets the password of the given staff account {@link Account} to the given {@link UnencryptedPassword} one-time
+	 * password.
+	 *
+	 * @param password must not be {@literal null}.
+	 * @param account must not be {@literal null}.
+	 * @return the account with the new password applied.
+	 */
+	public Account resetStaffAccountPassword(UnencryptedPassword password, Account account) {
+		Assert.isTrue(!account.isTrackedPerson(), "Password reset allowed for staff accounts only.");
+
+		log.info("Reset password for staff account " + account.getUsername());
+
+		return accounts.save(account.setPassword(encrypt(password)).setPasswordChangedAt(null));
+	}
+
+	/**
+	 * Marks that changing the password of the given {@link Account} is required.
+	 *
+	 * @param account must not be {@literal null}.
+	 */
+	public Account markPasswordChangeRequired(Account account) {
+		return accounts.save(account.setPasswordChangedAt(null));
+	}
+
+	/**
+	 * Marks that changing the password of the given {@link Account} is not required.
+	 *
+	 * @param account must not be {@literal null}.
+	 */
+	public Account markNoPasswordChangeRequired(Account account) {
+		return accounts.save(account.setPasswordChangedAt(LocalDateTime.now()));
 	}
 
 	private EncryptedPassword encrypt(UnencryptedPassword password) {
